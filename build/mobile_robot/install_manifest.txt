@@ -1,0 +1,15 @@
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/ament_index/resource_index/package_run_dependencies/mobile_robot
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/ament_index/resource_index/parent_prefix_path/mobile_robot
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/environment/ament_prefix_path.sh
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/environment/ament_prefix_path.dsv
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/environment/path.sh
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/environment/path.dsv
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/local_setup.bash
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/local_setup.sh
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/local_setup.zsh
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/local_setup.dsv
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/package.dsv
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/ament_index/resource_index/packages/mobile_robot
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/cmake/mobile_robotConfig.cmake
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/cmake/mobile_robotConfig-version.cmake
+/home/agush/everythingROS/firstProject_ws/install/mobile_robot/share/mobile_robot/package.xml

@@ -1,0 +1,201 @@
+<?xml version="1.0"?>
+
+<robot name="differential_drive_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- defining constants -->
+<xacro:property name="pi_const" value="3.14159265"/>
+
+<!-- body dimensions -->
+<xacro:property name="a" value="1" />
+<xacro:property name="b" value="0.3" />
+<xacro:property name="c" value="0.6" />
+
+<!-- WHeel and xastor dimensions-->
+<xacro:property name="r" value="0.15" />
+<xacro:property name="d" value="0.1" />
+
+<xacro:property name="s1" value="${b/2+r}" />
+<xacro:property name="s2" value="${2*r}" />
+<xacro:property name="s3" value="${2*r}" />
+<xacro:property name="s4" value="${c/2+d/2}" />
+
+ 
+ <!-- Mass Nd Inertial Properties-->
+
+<!-- Body, Wheel, Caster Material Density-->
+<xacro:property name="d1" value="2710.0" />
+<xacro:property name="d2" value="2710.0" />
+<xacro:property name="d3" value="2710.0" />
+
+<!-- Body mass, Wheel mass, caster mass-->
+<xacro:property name="m1" value="${d1*a*b*c}" />
+<xacro:property name="m2" value="${d2*pi_const*r*r*d}" />
+<xacro:property name="m3" value="${d3*(4.0/3.0)*pi_const*r*r*r}" />
+
+<!-- Body inertia, wheel inertia, castor nertia-->
+
+<!-- for Body, 3 axes-->
+<xacro:property name="Ix_body" value="${(1.0/12.0)*m1*(b*b+c*c)}" />
+<xacro:property name="Iy_body" value="${(1.0/12.0)*m1*(b*b+a*a)}" />
+<xacro:property name="Iz_body" value="${(1.0/12.0)*m1*(a*a+c*c)}" />
+
+<!-- Inertia for Wheel-->
+<xacro:property name="Iz_wheel" value="${(0.5)*m2*r*r}" />
+<xacro:property name="I_wheel" value="${(1.0/12.0)*m2*(3*r*r+d*d)}" />
+
+<!-- inertia for caster sphere-->
+<xacro:property name="I_caster" value="${(2.0/5.0)*m3*r*r}" />
+
+<!-- The following macro defines the complete inertial section of the robot body-->
+<xacro:macro name="inertia_body">
+    <inertial>
+    <!-- Displacemengt and Orientation of the center of mass frame of the link wrt -->
+    <origin rpy="0 0 0" xyz="0 0 ${s1}" />   <!-- RPY-> Roll Pitch Yaw-->
+    <mass value="${m1}"/>
+    <inertia ixx="${Ix_body}" ixy="0.0" ixz="0.0" iyy="${Iy_body}" iyz="0.0" izz="${Iz_body}" />
+    </inertial>
+</xacro:macro>
+
+<xacro:macro name="inertia_wheel">
+    <inertial>
+    <origin rpy="1.570795 0 0" xyz="0 0 0" />  <!-- RPY-> Roll Pitch Yaw = pi/2 0 0 --> 
+    <mass value="${m2}" />
+    <inertia ixx="${I_wheel}" ixy="0.0" ixz="0.0" iyy="${I_wheel}" iyz="0.0" izz="${Iz_wheel}" />
+    </inertial>
+</xacro:macro>
+
+<xacro:macro name="inertia_caster">
+    <inertial>
+    <origin rpy="0 0 0" xyz="0 0 0" />  <!-- RPY-> Roll Pitch Yaw = 0 0 0 --> 
+    <mass value="${m3}" />
+    <inertia ixx="${I_caster}" ixy="0.0" ixz="0.0" iyy="${I_caster}" iyz="0.0" izz="${I_caster}" />
+    </inertial>
+</xacro:macro>
+
+
+<!-- For proper Robot control in Gazebo, we include some files-->
+
+<xacro:include filename="$/home/agush/rover_first/src/robot.gazebo" />
+
+<!-- Defining LINKS and JPINTS-->
+
+<link name="base_footprint" /> </link> <!-- Fictious Link-->
+<joint name="body_link_joint" type="fixed">
+    <parent link="base_foortprint"/>
+    <child link="body_link"/>
+    
+</joint>
+
+<link name="body_link"> 
+    <geometry>
+        <box size="${a} ${b} ${c}"/>
+    </geometry>
+
+    <!-- setting the coordindnates and orientation of this body link-->
+    <origin rpy="0 0 0" xyz="0 0 ${s1}" />    
+    </visual>
+
+    <collision> <!-- defines hoe much area your object vonsumes in colisions-->
+        <geometry>
+            <box size="${a} ${b} ${c}"/>
+        </geometry>
+    </collision>
+
+    <xacro:inertia_body />
+</link>
+
+ <!-- end of body link-->
+
+<!-- back right wheel begins-->
+<joint name="wheel1_joint" type="continuous">
+    <parent link="body_link"/>
+    <child link="wheel1_link"/>
+
+    <origin xyz="${-s2} ${-s4} ${r}" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/> <!-- Axis around whoch rotstion is happening-->
+    <limit effort="50000" velocity="10"/>
+    <dynamics damping="1.0" friction="1.0" />
+
+</joint>
+
+<link name="wheel1_link">
+    <visual>
+        <origin xyz="0 0 0" rpy="${pi_const/2} 0 0"/>
+        <geometry>
+            <cylinder radius="${r}" length="${d}"/>
+        </geometry>
+    </visual>
+
+    <collision>
+        <origin xyz="0 0 0" rpy="${pi_const/2} 0 0"/>
+        <geometry>
+            <cylinder radius="${r}" length="${d}"/>
+        </geometry>
+    </collision>
+
+    <xacro:inertia_wheel />
+
+</link>
+
+<!-- back left wheel begins-->
+<joint name="wheel2_joint" type="continuous">
+    <parent link="body_link"/>
+    <child link="wheel2_link"/>
+
+    <origin xyz="${-s2} ${s4} ${r}" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="50000" velocity="10"/>
+    <dynamics damping="1.0" friction="1.0" />
+
+</joint>
+
+<link name="wheel2_link">
+    <visual>
+        <origin xyz="0 0 0" rpy="${pi_const/2} 0 0"/>
+        <geometry>
+            <cylinder radius="${r}" length="${d}"/>
+        </geometry>
+    </visual>
+
+    <collision>
+        <origin xyz="0 0 0" rpy="${pi_const/2} 0 0"/>
+        <geometry>
+            <cylinder radius="${r}" length="${d}"/>
+        </geometry>
+    </collision>
+
+    <xacro:inertia_wheel />
+
+</link>
+
+<joint name="caster_joint" type="fixed">
+    <origin xyz="${s3} 0 ${r}" rpy="0.0 0.0 0.0"/>
+    <parent link="body_link"/>
+    <child link="caster_link"/>
+
+</joint>
+
+<link name="caster_link">
+    <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.0"/>
+        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+    <visual name="">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+            <sphere radius="${r}"/>
+        </geometry>
+        
+    </visual>
+    <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+            <sphere radius="${r}"/>
+        </geometry>
+    </collision>
+    <xacro:inertia_caster />
+</link>
+
+
+</robot>

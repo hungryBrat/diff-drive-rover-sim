@@ -1,0 +1,45 @@
+# ---------------------------------------------------
+# ROS 2 Workspace Directories (Colcon auto-generated)
+# ---------------------------------------------------
+build/
+install/
+log/
+
+# ---------------------------------------------------
+# Python specifics (Common in ROS 2 nodes)
+# ---------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ---------------------------------------------------
+# C++ / Compiled Object Files
+# ---------------------------------------------------
+*.o
+*.obj
+*.out
+*.dylib
+*.a
+*.lib
+
+# # ---------------------------------------------------
+# # Simulation / Gazebo Specifics
+# # ---------------------------------------------------
+# # Ignore any generated URDFs if you compile them from xacro at build time
+# # (Only ignore if you script this, otherwise keep your .urdf/.xacro files!)
+# *.sdf.erb
+
+# ---------------------------------------------------
+# IDEs and Text Editors
+# ---------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---------------------------------------------------
+# OS Specifics
+# ---------------------------------------------------
+.DS_Store
+Thumbs.db

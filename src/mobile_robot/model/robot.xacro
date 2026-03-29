@@ -75,29 +75,31 @@
 
 <!-- For proper Robot control in Gazebo, we include some files-->
 
-<xacro:include filename="$/home/agush/rover_first/src/robot.gazebo" />
+<xacro:include filename="$(find mobile_robot)/model/robot.gazebo" />
 
 <!-- Defining LINKS and JPINTS-->
 
-<link name="base_footprint" /> </link> <!-- Fictious Link-->
+<link name="base_footprint" />  <!-- Fictious Link-->
 <joint name="body_link_joint" type="fixed">
-    <parent link="base_foortprint"/>
+    <parent link="base_footprint"/>
     <child link="body_link"/>
     
 </joint>
 
 <link name="body_link"> 
-    <geometry>
-        <box size="${a} ${b} ${c}"/>
-    </geometry>
+    <visual>
+        <geometry>
+            <box size="${a} ${c} ${b}"/>
+        </geometry>
 
-    <!-- setting the coordindnates and orientation of this body link-->
-    <origin rpy="0 0 0" xyz="0 0 ${s1}" />    
+        <!-- setting the coordindnates and orientation of this body link-->
+        <origin rpy="0 0 0" xyz="0 0 ${s1}" />    
     </visual>
 
     <collision> <!-- defines hoe much area your object vonsumes in colisions-->
+        <origin rpy="0 0 0" xyz="0 0 ${s1}" /> 
         <geometry>
-            <box size="${a} ${b} ${c}"/>
+            <box size="${a} ${c} ${b}"/>
         </geometry>
     </collision>
 
@@ -176,11 +178,11 @@
 </joint>
 
 <link name="caster_link">
-    <inertial>
+    <!-- <inertial>
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <mass value="0.0"/>
         <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
-    </inertial>
+    </inertial> -->
     <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>

@@ -20,7 +20,7 @@
     <material>Gazebo/Red</material>
 </gazebo>
 
-<gazebo reference="wheel2_link">
+<gazebo reference="caster_link">
     <mu1>0.000002</mu1>
     
     <mu2>0.000002</mu2>
@@ -35,18 +35,18 @@
         <left_joint>wheel2_joint</left_joint>
 
     <!-- kinematics -->
-        <wheel_seperation>${2*s4}</wheel_seperation>
-        <wheel_diameter>${2*r}</wheel_diameter>
+        <wheel_separation>${2*s4}</wheel_separation>
+        <wheel_radius>${r}</wheel_radius>
 
     <!-- limits -->
         <max_linear_acceleration>10</max_linear_acceleration>
     
     <!-- topics, frame and odometry-->
-        <topic>cmd_vel</topic>
+        <topic>/cmd_vel</topic>
         <tf_topic>/tf</tf_topic>
         <odom_topic>odom</odom_topic>
         <frame_id>odom</frame_id>
-        <child_frame_id>base_footprint </child_frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
         <odom_publisher_frequency>30</odom_publisher_frequency>
 
 </plugin>

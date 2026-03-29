@@ -21,7 +21,7 @@ def generate_launch_description():
     # skipping making our own empty world
 
     # abs path to the model
-    pathModelFile = os.path.joint(get_package_share_directory(namePackage),modelFileRelativePath)
+    pathModelFile = os.path.join(get_package_share_directory(namePackage),modelFileRelativePath)
 
     # get the robot description from the xacro model file
     robotDescription = xacro.process_file(pathModelFile).toxml()
@@ -50,7 +50,7 @@ def generate_launch_description():
     nodeRobotStatePublisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        output='screen'
+        output='screen' ,
         parameters=[{'robot_description': robotDescription,
                     'use_sim_time':True}]
     )

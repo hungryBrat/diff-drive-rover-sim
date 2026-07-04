@@ -2,6 +2,10 @@
 
 <robot name="differential_drive_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+<!--______________________________________________________________________________________--> 
+<!--_____________INERTIA AND BODY CONSTANTS_____________________________________________--> 
+<!--______________________________________________________________________________________--> 
+
 <!-- defining constants -->
 <xacro:property name="pi_const" value="3.14159265"/>
 
@@ -14,13 +18,17 @@
 <xacro:property name="r" value="0.15" />
 <xacro:property name="d" value="0.1" />
 
+<!--Lidar dimensions-->
+<xacro:property name="r_lidar" value="0.1" />
+<xacro:property name="d_lidar" value="0.1" />
+
 <xacro:property name="s1" value="${b/2+r}" />
 <xacro:property name="s2" value="${2*r}" />
 <xacro:property name="s3" value="${2*r}" />
 <xacro:property name="s4" value="${c/2+d/2}" />
 
- 
- <!-- Mass Nd Inertial Properties-->
+
+<!-- Mass Nd Inertial Properties-->
 
 <!-- Body, Wheel, Caster Material Density-->
 <xacro:property name="d1" value="2710.0" />
@@ -72,18 +80,36 @@
     </inertial>
 </xacro:macro>
 
+<xacro:macro name="inertia_lidar">
+    <inertial>
+        <mass value="1e-6"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+</xacro:macro>
 
-<!-- For proper Robot control in Gazebo, we include some files-->
+
+<!--______________________________________________________________________________________--> 
+<!--_____________LINKS AND JOINTS_____________________________________________--> 
+<!--______________________________________________________________________________________--> 
+
+
+<!-- For proper Robot control in Gazebo, we include its gazebo file-->
 
 <xacro:include filename="$(find mobile_robot)/model/robot.gazebo" />
 
-<!-- Defining LINKS and JPINTS-->
+
 
 <link name="base_footprint" />  <!-- Fictious Link-->
+
+<!-- FUTURE ME: explicit origin prevents Physics.cc "world pose not available" crash loop.
+     Without this, dartsim tries to resolve lidar_link's world pose before
+     base_footprint->body_link is committed, causing entities 36/39 to loop. -->
+
 <joint name="body_link_joint" type="fixed">
     <parent link="base_footprint"/>
     <child link="body_link"/>
-    
+    <origin xyz="0 0 0" rpy="0 0 0"/>
 </joint>
 
 <link name="body_link"> 
@@ -178,11 +204,6 @@
 </joint>
 
 <link name="caster_link">
-    <!-- <inertial>
-        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-        <mass value="0.0"/>
-        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
-    </inertial> -->
     <visual name="">
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>
@@ -199,5 +220,37 @@
     <xacro:inertia_caster />
 </link>
 
+<!-- FUTURE ME: removed spurious <axis> tag — fixed joints have no rotation axis -->
+<!-- lidar_joint: placed on top of body_link surface.
+     body_link origin is at s1=b/2+r above base_footprint, and the box
+     half-height is b/2, so the top surface of the body is at s1+b/2 = b+r
+     above base_footprint. We place the lidar centre at that height + half
+     the lidar cylinder height so it sits neatly on top. -->
+<joint name="lidar_joint" type="fixed">
+    <parent link="body_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 ${b+r+r_lidar/2}" rpy="0 0 0"/>
+</joint>
+
+<link name="lidar_link">
+    <!-- Visual and collision origins are 0 0 0 — the joint origin already
+         places the link centre correctly. Keeping offsets here caused the
+         sensor frame to be off-centre, tilting the scan plane. -->
+    <visual>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+            <cylinder radius="${r_lidar}" length="${d_lidar}"/>
+        </geometry>
+        <material name="Gazebo/Black"/>
+    </visual>
+
+    <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+            <cylinder radius="${r_lidar}" length="${d_lidar}"/>
+        </geometry>
+    </collision>
+    <xacro:inertia_lidar />
+</link>
 
 </robot>

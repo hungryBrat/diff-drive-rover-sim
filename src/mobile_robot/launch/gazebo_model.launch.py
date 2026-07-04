@@ -18,46 +18,60 @@ def generate_launch_description():
     # relative path to the xacro file
     modelFileRelativePath = 'model/robot.xacro'
 
-    # skipping making our own empty world
+    # relative path to the custom world SDF
+    worldFileRelativePath = 'worlds/empty_with_sensors.sdf'
+
+    # abs path to the world file
+    pathWorldFile = os.path.join(get_package_share_directory(namePackage), worldFileRelativePath)
 
     # abs path to the model
-    pathModelFile = os.path.join(get_package_share_directory(namePackage),modelFileRelativePath)
+    pathModelFile = os.path.join(get_package_share_directory(namePackage), modelFileRelativePath)
 
     # get the robot description from the xacro model file
     robotDescription = xacro.process_file(pathModelFile).toxml()
 
-    #this is the launch file from tje gazebo pkg
-    gazebo_rosPackageLaunch = PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('ros_gz_sim'), 'launch','gz_sim.launch.py'))
+    # launch file from the gazebo pkg
+    gazebo_rosPackageLaunch = PythonLaunchDescriptionSource(
+        os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
+    )
 
-    # now tp ythe launch description
+    # Use custom world SDF so gz-sim-sensors-system is declared at world level.
+    # gpu_lidar requires the sensors system to be a world plugin — NOT a robot plugin.
+    # NOTE: gz_args must be passed as a list when the world path is absolute,
+    # otherwise gz_sim.launch.py misparses it as a Fuel URI and tries to download it.
+    gazeboLaunch = IncludeLaunchDescription(
+        gazebo_rosPackageLaunch,
+        launch_arguments={
+            'gz_args': ['-r -v4 ', pathWorldFile],
+            'on_exit_shutdown': 'true'
+        }.items()
+    )
 
-    # as we are using a predetermined empty world
-    gazeboLaunch=IncludeLaunchDescription(gazebo_rosPackageLaunch, launch_arguments={'gz_args': [ '-r -v -v4 empty.sdf'], 'on_exit_shutdown': 'true' }.items())
-
-
-    # Gazebo Node
+    # Gazebo spawn node
     spawnModelNodeGazebo = Node(
         package='ros_gz_sim',
         executable='create',
         arguments=[
             '-name', robotXacroName,
-            '-topic', 'robot_description'
+            '-topic', '/robot_description'
         ],
         output='screen',
     )
 
-    # Robot state publisher NOde
+    # Robot state publisher node
     nodeRobotStatePublisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        output='screen' ,
-        parameters=[{'robot_description': robotDescription,
-                    'use_sim_time':True}]
+        output='screen',
+        parameters=[{
+            'robot_description': robotDescription,
+            'use_sim_time': True
+        }]
     )
 
-    # next is important to control robot from ROS2
+    # ROS <-> Gazebo bridge
     bridge_params = os.path.join(
-        get_package_share_directory(namePackage), # type: ignore
+        get_package_share_directory(namePackage),
         'parameters',
         'bridge_parameters.yaml'
     )
@@ -73,20 +87,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    # creating an empty launch description object
     LaunchDescriptionObject = LaunchDescription()
-
-    # adding gazeboLuanch
     LaunchDescriptionObject.add_action(gazeboLaunch)
-
-    # adding the teo nopdes
     LaunchDescriptionObject.add_action(spawnModelNodeGazebo)
     LaunchDescriptionObject.add_action(nodeRobotStatePublisher)
     LaunchDescriptionObject.add_action(start_gazebo_ros_bridge_cmd)
 
     return LaunchDescriptionObject
-
-
-
-
-

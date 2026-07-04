@@ -13,10 +13,13 @@ This package contains a full-stack ROS 2 and Gazebo simulation for a custom diff
 
 ## Rover Parameters
 
-* **Wheel Radius:** 
+* **Wheel Radius:** `r=`
 * **Track Width (Wheel Separation):** 
 * **Chassis Dimensions:** 
-* **Total Mass:** ``
+  * Length: `a=`
+  * Breath: `c=`
+  * height: `b=`
+* **Total Mass:** 
 
 ## Prerequisites
 

@@ -15,7 +15,12 @@ install(DIRECTORY
   launch
   model
   parameters
+  worlds
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY worlds/
+  DESTINATION share/${PROJECT_NAME}/worlds
 )
 
 if(BUILD_TESTING)

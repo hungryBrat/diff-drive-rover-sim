@@ -49,3 +49,6 @@ frames_*.pdf
 # ---------------------------------------------------
 .DS_Store
 Thumbs.db
+
+NOTE.md
+CLAUDE.md

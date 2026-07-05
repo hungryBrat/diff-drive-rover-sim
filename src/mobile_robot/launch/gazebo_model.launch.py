@@ -2,6 +2,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
+from launch.actions import RegisterEventHandler
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch_ros.actions import Node
@@ -87,10 +89,62 @@ def generate_launch_description():
         output='screen',
     )
 
+    diff_cont_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['diff_drive_controller'],
+        output='screen',
+    )
+
+    joint_broad_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_state_broadcaster'],
+        output='screen',
+
+    )
+
+
+    # Using handlers because need to add time delays before
+    # spawning joint_state_broadcaster and diff_controller
+
+    handlerA = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=spawnModelNodeGazebo,
+            on_exit=[joint_broad_spawner],
+        )
+    )
+
+    handlerB = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_broad_spawner,
+            on_exit=[diff_cont_spawner],
+        )
+    )
+
+    # defining the time-stamper as the interface between
+    # teleop-twist messages and the TwistStamped /cmd_vel of ros2_control
+    time_stamp_teleop = Node(
+        package='twist_stamper',
+        executable='twist_stamper',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ('cmd_vel_in', '/cmd_vel'),
+            ('cmd_vel_out', '/diff_drive_controller/cmd_vel')
+        ],
+        output='screen',
+
+    )
+
+
     LaunchDescriptionObject = LaunchDescription()
     LaunchDescriptionObject.add_action(gazeboLaunch)
-    LaunchDescriptionObject.add_action(spawnModelNodeGazebo)
     LaunchDescriptionObject.add_action(nodeRobotStatePublisher)
     LaunchDescriptionObject.add_action(start_gazebo_ros_bridge_cmd)
+    LaunchDescriptionObject.add_action(spawnModelNodeGazebo)
+    LaunchDescriptionObject.add_action(time_stamp_teleop)
+    LaunchDescriptionObject.add_action(handlerA)
+    LaunchDescriptionObject.add_action(handlerB)
+
 
     return LaunchDescriptionObject

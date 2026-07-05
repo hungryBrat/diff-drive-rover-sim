@@ -58,11 +58,21 @@
     </sensor>
 </gazebo>
 
-<!-- Differential drive controller -->
+<!-- ros2_control plugin -->
 <gazebo>
-    <plugin filename="gz-sim-diff-drive-system"
-            name="gz::sim::systems::DiffDrive">
-        <right_joint>wheel1_joint</right_joint>
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find mobile_robot)/parameters/controllers.yaml</parameters>
+
+        <!-- None of the below belong to gz_ros2_control. Those were 
+            DiffDrive-plugin parameters. gz_ros2_control is a different 
+            plugin with a completely different job — it doesn't know what
+            a wheel or a cmd_vel topic is. Its only job is: "load the 
+            controllers.yaml and run a controller_manager." All that
+            wheel/topic/frame configuration now lives inside 
+            controllers.yaml and diff_drive_controller — which is the 
+            whole point of the migration.-->
+        <!-- <right_joint>wheel1_joint</right_joint>
         <left_joint>wheel2_joint</left_joint>
         <wheel_separation>${2*s4}</wheel_separation>
         <wheel_radius>${r}</wheel_radius>
@@ -72,12 +82,12 @@
         <odom_topic>odom</odom_topic>
         <frame_id>odom</frame_id>
         <child_frame_id>base_footprint</child_frame_id>
-        <odom_publisher_frequency>30</odom_publisher_frequency>
+        <odom_publisher_frequency>30</odom_publisher_frequency> -->
     </plugin>
 </gazebo>
 
-<!-- Joint State Publisher -->
-<gazebo>
+<!-- Joint State Publisher is now handled by joint_state_broadcaster; the below is defunct-->
+<!-- <gazebo>
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
         <topic>joint_states</topic>
@@ -85,7 +95,7 @@
         <joint_name>wheel2_joint</joint_name>
         <joint_name>lidar_joint</joint_name>
     </plugin>
-</gazebo>
+</gazebo> -->
 
 <!-- NOTE: gz-sim-sensors-system moved to empty_sensors.sdf         -->
 <!-- It must be a world-level plugin in Gazebo Harmonic (v8.x),     -->
@@ -93,3 +103,8 @@
 <!-- pause/play flicker and sim/real-time drift.                    -->
 
 </robot>
+
+<!-- Controllers don't auto-start. The gz_ros2_control plugin creates 
+    a controller_manager when the robot loads, but it comes up with 
+    zero controllers active. You have to spawn them — load + activate 
+    joint_state_broadcaster and diff_drive_controller-->

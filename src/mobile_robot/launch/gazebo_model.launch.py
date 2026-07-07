@@ -5,6 +5,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import AppendEnvironmentVariable 
 
 from launch_ros.actions import Node
 import xacro
@@ -21,7 +22,21 @@ def generate_launch_description():
     modelFileRelativePath = 'model/robot.xacro'
 
     # relative path to the custom world SDF
-    worldFileRelativePath = 'worlds/empty_with_sensors.sdf'
+    worldFileRelativePath = 'worlds/obstacle_world.sdf'
+
+    # small_house asset root: this dir resolves the relative file://models/... refs,
+    # and its models/ subdir resolves the model://aws_... refs.
+    smallHousePath = os.path.join(
+        get_package_share_directory(namePackage),
+        'worlds', 'small_world_mlherd', 'small_house'
+    )
+
+    setResourceParent = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH', smallHousePath
+    )
+    setResourceModels = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH', os.path.join(smallHousePath, 'models')
+    )
 
     # abs path to the world file
     pathWorldFile = os.path.join(get_package_share_directory(namePackage), worldFileRelativePath)
@@ -138,6 +153,8 @@ def generate_launch_description():
 
 
     LaunchDescriptionObject = LaunchDescription()
+    LaunchDescriptionObject.add_action(setResourceParent)
+    LaunchDescriptionObject.add_action(setResourceModels)
     LaunchDescriptionObject.add_action(gazeboLaunch)
     LaunchDescriptionObject.add_action(nodeRobotStatePublisher)
     LaunchDescriptionObject.add_action(start_gazebo_ros_bridge_cmd)

@@ -16,6 +16,7 @@ install(DIRECTORY
   model
   parameters
   worlds
+  maps
   DESTINATION share/${PROJECT_NAME}
 )
 

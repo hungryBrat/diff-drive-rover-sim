@@ -2,106 +2,146 @@
 
 ## Overview
 
-This package contains a full-stack ROS 2 and Gazebo simulation for a custom differential drive rover. The project utilizes `xacro` for dynamic URDF generation and relies on the `ros_gz_bridge` to establish bidirectional communication between ROS 2 Jazzy and Gazebo Harmonic.
+A full-stack simulation of a custom differential-drive rover, built as a learning project on the way to autonomous navigation. The robot is described in `xacro`, actuated through **`ros2_control`** (`diff_drive_controller` hosted by `gz_ros2_control`), senses with a 2D **`gpu_lidar`**, and maps its environment with **`slam_toolbox`**.
+
+The package is entirely description (xacro), launch, config (yaml), worlds (sdf), and a saved map — there are no compiled or Python nodes yet.
+
+**Status:** ros2_control ✅ · furnished obstacle world ✅ · SLAM ✅ · Nav2 + AMCL next.
 
 ## Tech Stack
 
 * **OS:** Ubuntu 24.04
 * **ROS 2:** Jazzy Jalisco
-* **Simulation:** Gazebo Harmonic
-* **Key Packages:** `xacro`, `ros_gz_bridge`, `ros_gz_sim`, `teleop_twist_keyboard`
+* **Simulation:** Gazebo Harmonic (gz-sim 8)
+* **Control:** `ros2_control`, `diff_drive_controller`, `gz_ros2_control`
+* **Perception / SLAM:** `gpu_lidar`, `slam_toolbox` (online async), `nav2_map_server`
+* **Bridging:** `ros_gz_bridge`, `ros_gz_sim`, `twist_stamper`
 
 ## Rover Parameters
 
-* **Wheel Radius:** `r=`
-* **Track Width (Wheel Separation):** 
-* **Chassis Dimensions:** 
-  * Length: `a=`
-  * Breath: `c=`
-  * height: `b=`
-* **Total Mass:** 
+All physical constants are `xacro:property` values at the top of `model/robot.xacro`:
+
+| Property | Symbol | Value |
+| --- | --- | --- |
+| Chassis length | `a` | 1.0 m |
+| Chassis height | `b` | 0.3 m |
+| Chassis breadth | `c` | 0.6 m |
+| Wheel radius | `r` | 0.15 m |
+| Wheel thickness | `d` | 0.1 m |
+| Wheel separation | `2*s4` | 0.7 m (derived: `2*(c/2 + d/2)`) |
+| Lidar radius / height | `r_lidar` / `d_lidar` | 0.1 m / 0.1 m |
+| Material density | `d1..d3` | 2710 kg/m³ (aluminium) |
+
+Masses and inertia tensors are computed in the xacro from density × geometry (chassis ≈ 488 kg, each wheel ≈ 19 kg, caster ≈ 38 kg).
+
+> **Note:** `parameters/controllers.yaml` hardcodes `wheel_separation` and `wheel_radius` independently — xacro `${...}` substitution does **not** apply to yaml, so these must be kept in sync with the model **by hand**.
+
+### LiDAR
+
+360 samples over ±π, 15 Hz, range 0.1–12.0 m, Gaussian noise σ = 0.001. Publishes to `/scan` in frame `lidar_link`.
 
 ## Prerequisites
 
-Ensure you have a working installation of ROS 2 Jazzy and Gazebo Harmonic. You will also need to install the necessary integration and control packages:
+A working ROS 2 Jazzy + Gazebo Harmonic install. Since `package.xml` declares all runtime dependencies, the cleanest install is:
 
+```bash
+cd ~/everythingROS/firstProject_ws
+rosdep install --from-paths src --ignore-src -r -y
+```
 
-    ```bash
-    sudo apt update
-    sudo apt install ros-jazzy-ros-gz-sim ros-jazzy-ros-gz-bridge ros-jazzy-xacro ros-jazzy-teleop-twist-keyboard
-    ```
+Or install explicitly:
 
-After you ensure that you have a working version of ROS2 and Gazebo, follow the given steps to launch the simulation
+```bash
+sudo apt install \
+  ros-jazzy-ros-gz-sim ros-jazzy-ros-gz-bridge ros-jazzy-xacro \
+  ros-jazzy-robot-state-publisher ros-jazzy-teleop-twist-keyboard \
+  ros-jazzy-controller-manager ros-jazzy-diff-drive-controller \
+  ros-jazzy-joint-state-broadcaster ros-jazzy-gz-ros2-control \
+  ros-jazzy-twist-stamper ros-jazzy-slam-toolbox ros-jazzy-nav2-map-server
+```
 
-## Installation
+## Build
 
-1. Source your ROS 2 installation:
-   
-    Note that without sourcing your workspace, you will not be able to use any ROS2
+```bash
+cd ~/everythingROS/firstProject_ws
+colcon build --symlink-install
+source install/setup.bash   # required in every new terminal
+```
 
-    ```Bash
-    source /opt/ros/jazzy/setup.bash
-    ```
-
-2. Navigate to your colcon workspace src directory:
-
-    All the code that you write needs to go in the `/src` folder
-
-    ```Bash
-    cd ~/ros2_ws/src
-    ```
-    Clone this repository (or copy your package folder here).
-
-3. Build the workspace:
-
-    ```Bash
-    cd ~/ros2_ws
-    colcon build
-    ```
-
-4. Source the built workspace:
-
-    ```Bash
-    source install/setup.bash
-    ```
+`--symlink-install` lets edits to xacro / yaml / launch / world files take effect **without** a rebuild. (Newly *added* files still need one build to create their symlink.)
 
 ## Usage
-1. **Launching the Simulation**
-   
-    The main launch file will start Gazebo Harmonic, parse the URDF model via xacro, spawn the rover into the simulation, and start the necessary bridges for standard ROS 2 topics (/cmd_vel, /odom, /tf).
 
-    ```Bash
-    ros2 launch mobile_robot gazebo_model.launch.py
-    ```
+**1. Launch the simulation**
 
+Starts Gazebo with the furnished house world, spawns the rover from `/robot_description`, and brings up `robot_state_publisher`, the ROS↔Gazebo bridge, the controllers, and `twist_stamper`.
 
-2. **Teleoperation**
-   
-    To drive the rover using your keyboard, open a new terminal, source the workspace, and run the teleop node:
+```bash
+ros2 launch mobile_robot gazebo_model.launch.py
+```
 
-    ```Bash
-    ros2 run teleop_twist_keyboard teleop_twist_keyboard
-    ```
+For a fast, physics-light test, point `worldFileRelativePath` in the launch file at `worlds/empty_with_sensors.sdf` instead of `worlds/obstacle_world.sdf`.
 
-**Note: Ensure the teleop node is publishing to the correct /cmd_vel topic that the Gazebo differential drive plugin is subscribing to via the bridge.**
+**2. Drive it** (new terminal, sourced)
 
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+teleop publishes `Twist` on `/cmd_vel`; `twist_stamper` restamps it to the `TwistStamped` that `diff_drive_controller` requires.
+
+**3. Map it with SLAM** (new terminal, sourced)
+
+```bash
+ros2 launch mobile_robot slam.launch.py
+rviz2 --ros-args -p use_sim_time:=true   # Fixed Frame = map; add Map, LaserScan, TF
+```
+
+Drive **slowly** — fast in-place rotation outruns the scan matcher and blooms the map (duplicated walls, scattered rooms).
+
+**4. Save the map** (while SLAM is still running)
+
+```bash
+ros2 run nav2_map_server map_saver_cli -f src/mobile_robot/maps/small_house \
+  --ros-args -p save_map_timeout:=10000
+```
+
+## Architecture
+
+**TF tree**
+
+```
+map → odom → base_footprint → body_link → {wheel1_link, wheel2_link, caster_link, lidar_link}
+```
+
+Ownership of that chain is split deliberately:
+
+* `odom → base_footprint` — published by **`diff_drive_controller`** at 50 Hz from wheel encoders. Smooth and locally accurate, but drifts without bound.
+* `map → odom` — published by **`slam_toolbox`**. The slowly-updating *correction* for that drift. Two publishers can never own the same transform, which is why SLAM corrects `odom` rather than the robot directly.
+
+**ROS ↔ Gazebo bridging** (`parameters/bridge_parameters.yaml`) maps only `/clock` and `/scan`. `/cmd_vel`, `/odom`, `/tf`, and `joint_states` are deliberately **not** bridged — `diff_drive_controller` owns those on the ROS side, so bridging them would double-publish.
 
 ## Project Structure
 
-   * `launch/`: Contains ROS 2 launch files (e.g., sim_launch.py).
-
-   * `urdf/`: Contains the .xacro and .urdf files defining the rover's visual, collision, and inertial properties.
-
-   * `worlds/`: Contains custom Gazebo Harmonic .sdf world files.
-
-   * `config/`: Contains YAML configuration files mapping topics for the ros_gz_bridge.
-
-   * `CMakeLists.txt` / `package.xml`: Standard ROS 2 package build configurations.
+```
+src/mobile_robot/
+├── model/        # robot.xacro (links, joints, inertia, <ros2_control>) + robot.gazebo (sensors, plugins)
+├── launch/       # gazebo_model.launch.py (full sim), slam.launch.py
+├── parameters/   # controllers.yaml, bridge_parameters.yaml, mapper_params_online_async.yaml
+├── worlds/       # obstacle_world.sdf (AWS Small House, vendored) + empty_with_sensors.sdf
+└── maps/         # small_house.pgm / .yaml — saved occupancy grid, input to the Nav2 phase
+```
 
 ## Troubleshooting
 
-If the rover is not moving when sending commands:
+**Rover doesn't move.** Controllers do not auto-start — confirm both spawned: `ros2 control list_controllers` should show `joint_state_broadcaster` and `diff_drive_controller` as `active`. Also confirm `twist_stamper` is running; without it, `diff_drive_controller` never receives a `TwistStamped`.
 
-- Verify that the ros_gz_bridge is running correctly and successfully translating geometry_msgs/msg/Twist from ROS to the Gazebo equivalent.
+**SLAM produces no map.** Check in this order:
 
-- Double-check the Gazebo differential drive plugin parameters in your URDF to ensure the `<left_joint>` and `<right_joint>` names match your defined joints exactly.
+1. `ros2 topic echo /scan --field header.frame_id --once` → must print `lidar_link`. If it prints a scoped Gazebo name, the `<gz_frame_id>` tag in `robot.gazebo` is missing.
+2. `ros2 topic info /scan --verbose` → `Subscription count` must be 1. If 0, slam_toolbox never activated (it is a **lifecycle node** — launch it via the shipped `online_async_launch.py`, not a raw `Node`).
+3. `ros2 run tf2_ros tf2_echo map odom` → must resolve once the first scan is processed.
+
+**RViz shows nothing.** Launch it with `use_sim_time:=true`, or TF lookups run against wall-clock while everything else is stamped with sim time. Check each display's Topic field is actually set, and set the Map display's Durability to *Transient Local* (the map is latched, republished only every 5 s).
+
+**Sim time freezes / RTF collapses.** Non-static mesh furniture destabilises the solver and starves both the controllers and the sensor pipeline at once. Keep world furniture `<static>`.

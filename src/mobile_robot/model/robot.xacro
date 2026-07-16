@@ -109,7 +109,7 @@
 <joint name="body_link_joint" type="fixed">
     <parent link="base_footprint"/>
     <child link="body_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="${s2} 0 0" rpy="0 0 0"/>
 </joint>
 
 <link name="body_link"> 

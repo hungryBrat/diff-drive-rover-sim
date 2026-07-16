@@ -11,7 +11,7 @@ diff_drive_controller:
   ros__parameters:
     left_wheel_names: ['wheel2_joint']
     right_wheel_names: ['wheel1_joint']
-    wheel_separation: 1.2
+    wheel_separation: 0.7
     wheel_radius: 0.15
     use_sim_time: true
     odom_frame_id: odom

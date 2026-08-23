@@ -22,6 +22,7 @@ install(DIRECTORY
 
 install(PROGRAMS
   scripts/waypoint_client.py
+  scripts/camera_opencv.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

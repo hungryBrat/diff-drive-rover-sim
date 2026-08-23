@@ -22,6 +22,9 @@
 <xacro:property name="r_lidar" value="0.1" />
 <xacro:property name="d_lidar" value="0.1" />
 
+<xacro:property name="r_camera" value="0.025" />
+<xacro:property name="d_camera" value="0.025" />
+
 <xacro:property name="s1" value="${b/2+r}" />
 <xacro:property name="s2" value="${2*r}" />
 <xacro:property name="s3" value="${2*r}" />
@@ -81,6 +84,14 @@
 </xacro:macro>
 
 <xacro:macro name="inertia_lidar">
+    <inertial>
+        <mass value="1e-6"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+</xacro:macro>
+
+<xacro:macro name="inertia_camera">
     <inertial>
         <mass value="1e-6"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -253,7 +264,30 @@
     <xacro:inertia_lidar />
 </link>
 
+<joint name="camera_joint" type="fixed">
+    <parent link="body_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.505 0 ${s1}" rpy="0 0 0"/>
+</joint>
 
+<link name="camera_link">
+    <visual>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+            <box size="0.010 0.03 0.03"/>
+        </geometry>
+        <material name="Gazebo/Black"/>
+    </visual>
+    <xacro:inertia_camera/>
+</link>
+
+<joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_link_optical"/>
+    <origin xyz="0 0 0" rpy="${-pi_const/2} 0.0 ${-pi_const/2}"/>
+</joint>
+
+<link name="camera_link_optical"></link>
 
 
 <!--______________________________________________________________________________________--> 
